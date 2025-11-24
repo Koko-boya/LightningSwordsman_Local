@@ -1,0 +1,3 @@
+# server.py uses only standard libraries (http.server, socketserver, os).
+# 'requests' is included here for the upcoming asset localization scripts.
+requests

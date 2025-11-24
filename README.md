@@ -128,12 +128,26 @@ LightningSwordsman_Local/
 
 ---
 
-## Building
+## Running the Game
 
-No build step required – everything runs directly in the browser.
+No build step required – the game runs directly in the browser.
+
+### Using Python Server
 
 1. Download or clone the project.
-2. Open `index.html` in any modern browser.
+2. Ensure Python 3 is installed on your system.
+3. Navigate to the project directory in terminal/command prompt.
+4. Install required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. Run the server:
+   - **Windows:** Double-click `connect.bat` or run `python server.py`
+   - **Linux/Mac:** Run `python server.py` or `python3 server.py`
+6. Open your browser and go to `http://localhost:8000`
+7. Press Ctrl+C in the terminal to stop the server.
+
+**Note:** Some browsers may restrict certain features when opening files directly. Using the Python server method is recommended for the best experience.
 
 **Recommended Browsers:**
 
