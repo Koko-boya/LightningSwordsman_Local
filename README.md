@@ -19,7 +19,7 @@ A fully playable local version of the Lightning-Riding Swordsman game, featuring
 
 ### Option 1: Play Online
 
-Visit the original game: [Lightning-Riding Swordsman](https://webstatic.hoyoverse.com/upload/event/2024/09/13/62fb1f45bc54374ea5cfd4e3866e0f6e_5379558053155499519.html)
+Visit the original game: [Lightning-Riding Swordsman](https://koko-boya.github.io/LightningSwordsman_Local/index.html)
 
 ### Option 2: Play Offline (This Version)
 
@@ -176,5 +176,6 @@ No build step required – the game runs directly in the browser.
 ---
 
 ## License
+
 
 Please refer to the original game's terms of service.
