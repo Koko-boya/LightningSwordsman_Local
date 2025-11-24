@@ -17,10 +17,17 @@ A fully playable local version of the Lightning-Riding Swordsman game, featuring
 
 ## How to Play
 
-1. Open `index.html` in a modern web browser.
-2. Click "Start" to begin.
-3. Your progress will auto-save at checkpoints.
-4. Refresh the page – your save will auto-load automatically.
+### Option 1: Play Online
+
+Visit the original game: [Lightning-Riding Swordsman](https://webstatic.hoyoverse.com/upload/event/2024/09/13/62fb1f45bc54374ea5cfd4e3866e0f6e_5379558053155499519.html)
+
+### Option 2: Play Offline (This Version)
+
+1. Follow the setup instructions in the "Running the Game" section below.
+2. Open the game in your browser at `http://localhost:8000`
+3. Click "Start" to begin.
+4. Your progress will auto-save at checkpoints.
+5. Refresh the page – your save will auto-load automatically.
 
 ---
 
@@ -77,7 +84,8 @@ The save system is built around four core patches:
 ## Credits
 
 * Original Game: HoYoFair Team (Licialurie, Kuro Lee, To___e, and other creators)
-* Reverse Engineering & Save System Implementation: Assisted by Gemini 3 & Claude Sonnet 4.5 
+* Localization: Official HoYoFair event
+* Save System: Community modification
 
 ---
 
@@ -99,6 +107,11 @@ All rights to the original game belong to the original creators.
   ```javascript
   localStorage.getItem('hoyofair_gamesave');
   ```
+
+### Title Card Shows Wrong Scene?
+
+* This is a known cosmetic issue.
+* The game will still load the correct scene after you click "Click to continue".
 
 ### Progress Not Saving?
 
@@ -132,7 +145,7 @@ LightningSwordsman_Local/
 
 No build step required – the game runs directly in the browser.
 
-### Using Python Server
+### Method 1: Using Python Server (Recommended)
 
 1. Download or clone the project.
 2. Ensure Python 3 is installed on your system.
@@ -146,6 +159,11 @@ No build step required – the game runs directly in the browser.
    - **Linux/Mac:** Run `python server.py` or `python3 server.py`
 6. Open your browser and go to `http://localhost:8000`
 7. Press Ctrl+C in the terminal to stop the server.
+
+### Method 2: Direct File Access (Not Recommended - Because it won't work)
+
+1. Download or clone the project.
+2. Open `index.html` directly in any modern browser.
 
 **Note:** Some browsers may restrict certain features when opening files directly. Using the Python server method is recommended for the best experience.
 

@@ -5416,7 +5416,12 @@
     Se = function(t, e) {
         var saved = loadFromLocalStorage();
         if (saved && saved.checkpoint && !e) {
-            console.log("[LocalSave] Intercepting Se() - using loaded data");            
+            console.log("[LocalSave] Intercepting Se() - using loaded data");
+            // [FIX] Restore pageInfo progression state
+            if (saved.pageInfo) {
+                ye.pageInfo = saved.pageInfo;
+                console.log("[LocalSave] Restored pageInfo:", saved.pageInfo);
+            }
             return originalSe({
                 checkpoint: saved.checkpoint,
                 player: saved.player,
@@ -5580,12 +5585,17 @@
 (function() {
     var saved = loadFromLocalStorage();
     if (saved && saved.checkpoint) {
+        console.log("[LocalSave Te()] Loading from localStorage:", saved);
         ye.gameData = {
             checkpoint: saved.checkpoint,
             player: saved.player,
             map: saved.map
         };
-        ye.pageInfo = se(se({}, ye.pageInfo), saved.pageInfo || {});
+        // Use direct assignment instead of merge to ensure full restoration
+        if (saved.pageInfo) {
+            ye.pageInfo = saved.pageInfo;
+            console.log("[LocalSave Te()] Restored pageInfo:", saved.pageInfo);
+        }
     }
 })(),
 console.log("newGameData:", ye.gameData)
