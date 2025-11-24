@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta Tags -->
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta name="viewport"
+        content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    <meta name="applicable-device" content="mobile">
+    <meta name="renderer" content="webkit">
+    <meta name="force-rendering" content="webkit">
+    <meta name="Copyright" content="miHoYo">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="email=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-status-bar-style" content="black-translucent">
+
+    <title>Lightning-Riding Swordsman</title>
+    <link id="icon" rel="shortcut icon" href="favicon.ico">
+
+    <!-- CRITICAL: Load Vue BEFORE any game scripts -->
+    <script src="./libs/vue.runtime.min.js" crossorigin></script>
+
+    <!-- CSS PATCH: FORCE MENU VISIBILITY -->
+    <style>
+        .lang-item {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        .lang-select-pop {
+            display: block !important;
+            visibility: visible !important;
+        }
+    </style>
+
+    <!-- [PATCH V36] Offline Mode: Nuclear English Force & Full Asset Redirects -->
+    <script>
+        (function () {
+            console.log("[PATCH V36] Initializing...");
+
+            // --- 1. COOKIE & NAVIGATOR FORCE ---
+            try {
+                document.cookie = "mi18nLang=en-us; path=/; max-age=31536000";
+                Object.defineProperty(navigator, 'language', { value: 'en-US', configurable: true });
+                Object.defineProperty(navigator, 'languages', { value: ['en-US', 'en'], configurable: true });
+            } catch (e) { }
+
+            // --- 2. ERROR HANDLER ---
+            window.onerror = function (msg, url, line, col, error) {
+                if (msg && (msg.includes('ResizeObserver') || msg.includes('AudioContext'))) return false;
+                const div = document.createElement('div');
+                div.style = "position:fixed;top:0;left:0;width:100%;background:rgba(200,0,0,0.9);color:white;z-index:99999;padding:10px;font-family:monospace;pointer-events:none;font-size:12px;overflow:auto;max-height:20vh;";
+                div.innerHTML = `<h3>⚠️ CRASH</h3><p>${msg}</p>`;
+                document.body.appendChild(div);
+                console.error("[PATCH CRASH]", error);
+                return false;
+            };
+
+            // --- 3. PATH RESOLVER ---
+            function resolveLocalPath(url) {
+                if (typeof url !== 'string') return null;
+                // Strip CSS url() wrapper
+                const cssUrlMatch = url.match(/url\(['"]?(.*?)['"]?\)/);
+                if (cssUrlMatch) url = cssUrlMatch[1];
+
+                let cleanPath = url.split('?')[0];
+                try { cleanPath = decodeURIComponent(cleanPath); } catch (e) { }
+                let filename = cleanPath.split('/').pop();
+
+                // A. FORCE ENGLISH CONFIGS
+                // If the game asks for zh-cn.json, GIVE IT en-us.json
+                if (filename.includes('zh-cn.json')) {
+                    const enFile = filename.replace('zh-cn', 'en-us');
+                    // console.log(`[PATCH] Swapping Config: ${filename} -> ${enFile}`);
+                    return enFile;
+                }
+                // If the game asks for zh-cn fonts, give en-us fonts
+                if (filename.includes('zh-cn') && filename.includes('.woff')) {
+                    return filename.replace('zh-cn', 'en-us');
+                }
+
+                // B. STANDARD ASSETS
+                if (cleanPath.match(/\.(png|jpg|jpeg|webp|gif|svg)$/i)) return 'images/' + filename;
+                if (cleanPath.match(/\.(mp3|wav|ogg|mp4|webm|ts)$/i)) return 'medias/' + filename;
+
+                // C. ROOT CONFIGS
+                if (cleanPath.match(/\.(json|woff|woff2)$/i)) {
+                    if (filename.includes('fontConfig') ||
+                        filename.includes('en-us') ||
+                        filename.match(/^m\d+.*\.json$/)) {
+                        return filename;
+                    }
+                }
+                return null;
+            }
+
+            // --- 4. DEEP DOM INTERCEPTORS ---
+            // Intercept Image.src
+            const imageSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+            Object.defineProperty(HTMLImageElement.prototype, 'src', {
+                set: function (url) {
+                    const local = resolveLocalPath(url);
+                    imageSrcDesc.set.call(this, local || url);
+                },
+                get: function () { return imageSrcDesc.get.call(this); }
+            });
+
+            // Intercept Video.src
+            const videoSrcDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'src');
+            Object.defineProperty(HTMLMediaElement.prototype, 'src', {
+                set: function (url) {
+                    const local = resolveLocalPath(url);
+                    if (local) console.log(`[PATCH] Redirecting Video: ${local}`);
+                    videoSrcDesc.set.call(this, local || url);
+                },
+                get: function () { return videoSrcDesc.get.call(this); }
+            });
+
+            // Intercept Video.poster (For the JPG thumbnail you mentioned)
+            const videoPosterDesc = Object.getOwnPropertyDescriptor(HTMLVideoElement.prototype, 'poster');
+            Object.defineProperty(HTMLVideoElement.prototype, 'poster', {
+                set: function (url) {
+                    const local = resolveLocalPath(url);
+                    videoPosterDesc.set.call(this, local || url);
+                },
+                get: function () { return videoPosterDesc.get.call(this); }
+            });
+
+            // Intercept setAttribute (Used by Vue)
+            const originalSetAttribute = Element.prototype.setAttribute;
+            Element.prototype.setAttribute = function (name, value) {
+                if ((name === 'src' || name === 'href' || name === 'poster') && typeof value === 'string') {
+                    const local = resolveLocalPath(value);
+                    if (local) value = local;
+                }
+                return originalSetAttribute.call(this, name, value);
+            };
+
+            // --- 5. MOCKS & PROXIES ---
+            const MOCK_RESPONSES = {
+                'lang_config': JSON.stringify({ "zh-cn": { "start": "Start", "loading": "Loading" }, "en-us": { "start": "Start", "loading": "Loading" } }),
+                'font_config': JSON.stringify({ "font": { "urls": [] } }),
+                'api_success': JSON.stringify({ retcode: 0, message: "OK", data: { success: true } }),
+                'merlin_success': JSON.stringify({ retcode: 0, message: "OK", data: { info: { components: [] } } })
+            };
+
+            const createProxyMockPlugin = (names, methods = {}) => {
+                const aliases = Array.isArray(names) ? names : [names];
+                const primaryName = aliases[0];
+                const baseMock = {
+                    check: () => Promise.resolve(true),
+                    isLogin: () => true,
+                    track: () => Promise.resolve(proxyMock),
+                    report: () => Promise.resolve(proxyMock),
+                    setup: () => proxyMock,
+                    mergeConfig: () => proxyMock,
+                    init: (...args) => {
+                        const lastArg = args[args.length - 1];
+                        if (typeof lastArg === 'function') lastArg();
+                        return Promise.resolve(proxyMock);
+                    },
+                    Integrations: { BrowserTracing: function () { } },
+                    ...methods
+                };
+                const proxyMock = new Proxy(baseMock, {
+                    get: function (target, prop) {
+                        if (prop in target) return target[prop];
+                        if (prop === 'install') {
+                            return function (Vue) {
+                                console.log(`[PATCH] Installing Mock Plugin: ${primaryName}`);
+                                aliases.forEach(alias => { Vue.prototype['$' + alias] = proxyMock; });
+                            };
+                        }
+                        if (typeof prop === 'string' && prop !== 'then') {
+                            return function (...args) { return Promise.resolve(proxyMock); };
+                        }
+                        return undefined;
+                    }
+                });
+                baseMock.default = proxyMock;
+                aliases.forEach(alias => { window[alias] = proxyMock; });
+                return proxyMock;
+            };
+
+            window.EventSentrySdk = { Core: function () { return { init: () => Promise.resolve(), addCustomerMetric: () => { }, captureException: () => { }, captureMessage: () => { }, report: () => { }, Integrations: { BrowserTracing: function () { } } }; } };
+            createProxyMockPlugin(['MihoyoEventSentry', 'MihoyoEventSentryBrowser', 'Sentry']);
+            window.PaimonEventSentry = { load: () => Promise.resolve(), init: () => Promise.resolve(window.MihoyoEventSentry) };
+            createProxyMockPlugin(['miHoYoAccountSdk', 'hoyoverseAccountSdk', 'AccountSdk'], { getUserInfo: () => Promise.resolve({ cookie_token: "offline_token", uid: "123456789" }) });
+            createProxyMockPlugin(['mihoyo_event_login', 'miHoYoEventLogin', 'mihoyoEventLogin']);
+            createProxyMockPlugin(['mihoyo_analysis', 'miHoYoAnalysis']);
+            window.MIHOYO_ANALYSIS_LOGINEFFECT = true;
+            createProxyMockPlugin(['miHoYoBrowserTips', 'mihoyoBrowserTips']);
+            window.DS = { ready: (cb) => { if (cb) cb(); } };
+
+            // --- 6. NETWORK INTERCEPTOR ---
+            const originalFetch = window.fetch;
+            window.fetch = function (input, init) {
+                if (typeof input === 'string') {
+                    const localPath = resolveLocalPath(input);
+                    if (localPath) {
+                        return originalFetch(localPath, init).then(response => {
+                            if (!response.ok) {
+                                if (localPath.includes('json')) return new Response(MOCK_RESPONSES.lang_config, { status: 200 });
+                            }
+                            return response;
+                        });
+                    }
+                    if (input.startsWith('http') && !input.includes(location.hostname)) {
+                        console.log(`[PATCH] Mocking API Fetch: ${input}`);
+                        let responseData = MOCK_RESPONSES.api_success;
+                        if (input.includes('merlin')) responseData = MOCK_RESPONSES.merlin_success;
+                        return Promise.resolve(new Response(responseData, { status: 200, headers: { 'Content-Type': 'application/json' } }));
+                    }
+                }
+                return originalFetch(input, init);
+            };
+
+            const originalOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function (method, url) {
+                if (typeof url === 'string') {
+                    const localPath = resolveLocalPath(url);
+                    if (localPath) url = localPath;
+                    else if (url.startsWith('http') && !url.includes(location.hostname)) {
+                        console.log(`[PATCH] Mocking API XHR: ${url}`);
+                        let responseData = MOCK_RESPONSES.api_success;
+                        if (url.includes('merlin')) responseData = MOCK_RESPONSES.merlin_success;
+                        url = "data:application/json;charset=utf-8," + encodeURIComponent(responseData);
+                    }
+                }
+                return originalOpen.apply(this, [method, url, ...Array.from(arguments).slice(2)]);
+            };
+
+            // --- 7. STYLE OBSERVER ---
+            new MutationObserver((mutations) => {
+                mutations.forEach((m) => {
+                    if (m.type === 'attributes' && m.attributeName === 'style') {
+                        const node = m.target;
+                        if (node.style.backgroundImage && node.style.backgroundImage.includes('http')) {
+                            const local = resolveLocalPath(node.style.backgroundImage);
+                            if (local) node.style.backgroundImage = `url("${local}")`;
+                        }
+                    }
+                    if (m.addedNodes) {
+                        m.addedNodes.forEach((node) => {
+                            if (node.tagName === 'STYLE' && node.innerHTML.includes('act-webstatic.mihoyo.com')) {
+                                node.innerHTML = node.innerHTML.replace(/https:\/\/act-webstatic\.mihoyo\.com\/font_generate\//g, '');
+                            }
+                            if (node.tagName === 'LINK' && node.href && node.href.includes('act-webstatic.mihoyo.com')) {
+                                node.href = node.href.split('/').pop();
+                            }
+                        });
+                    }
+                });
+            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+
+        })();
+    </script>
+
+    <!-- Webpack Runtime -->
+    <script>!function () { "use strict"; var n, e = {}, r = {}; function t(n) { var o = r[n]; if (void 0 !== o) return o.exports; var i = r[n] = { id: n, loaded: !1, exports: {} }; return e[n].call(i.exports, i, i.exports, t), i.loaded = !0, i.exports } t.m = e, n = [], t.O = function (e, r, o, i) { if (!r) { var u = 1 / 0; for (l = 0; l < n.length; l++) { r = n[l][0], o = n[l][1], i = n[l][2]; for (var f = !0, c = 0; c < r.length; c++)(!1 & i || u >= i) && Object.keys(t.O).every((function (n) { return t.O[n](r[c]) })) ? r.splice(c--, 1) : (f = !1, i < u && (u = i)); if (f) { n.splice(l--, 1); var a = o(); void 0 !== a && (e = a) } } return e } i = i || 0; for (var l = n.length; l > 0 && n[l - 1][2] > i; l--)n[l] = n[l - 1]; n[l] = [r, o, i] }, t.n = function (n) { var e = n && n.__esModule ? function () { return n.default } : function () { return n }; return t.d(e, { a: e }), e }, t.d = function (n, e) { for (var r in e) t.o(e, r) && !t.o(n, r) && Object.defineProperty(n, r, { enumerable: !0, get: e[r] }) }, t.g = function () { if ("object" == typeof globalThis) return globalThis; try { return this || new Function("return this")() } catch (n) { if ("object" == typeof window) return window } }(), t.o = function (n, e) { return Object.prototype.hasOwnProperty.call(n, e) }, t.r = function (n) { "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(n, Symbol.toStringTag, { value: "Module" }), Object.defineProperty(n, "__esModule", { value: !0 }) }, t.nmd = function (n) { return n.paths = [], n.children || (n.children = []), n }, t.p = "", function () { var n = { 556: 0 }; t.O.j = function (e) { return 0 === n[e] }; var e = function (e, r) { var o, i, u = r[0], f = r[1], c = r[2], a = 0; if (u.some((function (e) { return 0 !== n[e] }))) { for (o in f) t.o(f, o) && (t.m[o] = f[o]); if (c) var l = c(t) } for (e && e(r); a < u.length; a++)i = u[a], t.o(n, i) && n[i] && n[i][0](), n[i] = 0; return t.O(l) }, r = self.webpackChunke20240409hoyofair = self.webpackChunke20240409hoyofair || []; r.forEach(e.bind(null, 0)), r.push = e.bind(null, r.push.bind(r)) }() }();</script>
+
+    <!-- App Scripts -->
+    <script src="./libs/sentry-vue.tracing.es5.min.js"></script>
+    <script defer="defer" src="assets/js/vendors_c305f15d74fe43b9e2ba.js"></script>
+    <script defer="defer" src="assets/js/styles_546cd7b2a89c34836c8f.js"></script>
+    <script defer="defer" src="assets/js/index_99c2384191bb2cc9078c.js"></script>
+
+    <!-- Stylesheets -->
+    <link href="assets/css/styles_7a0c341105bf886443fc.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app"></div>
+    <div id="root"></div>
+</body>
+
+</html>
