@@ -1,30 +1,30 @@
 # Lightning-Riding Swordsman – Local Version with Save System
 
-A fully playable **local** version of the HoYoFair *Lightning-Riding Swordsman* game, featuring a working checkpoint-based save system.
+A fully playable local version of the Lightning-Riding Swordsman game, featuring a working checkpoint-based save system.
 
 ---
 
-## ✨ Features
+## Features
 
-* ✅ **Fully Local** – No internet connection required
-* ✅ **Auto-Save System** – Progress is automatically saved at checkpoints
-* ✅ **LocalStorage Persistence** – Saves persist across browser sessions
-* ✅ **Visitor Mode Support** – Works without login
-* ✅ **Complete Progress Tracking** – HP, inventory, checkpoint, tutorial flags, and more are all saved
-* ✅ **Correct Scene Restoration** – Resumes at the saved checkpoint with the correct in-game state and title card
+* Fully Local – No internet connection required
+* Auto-Save System – Progress is automatically saved at checkpoints
+* LocalStorage Persistence – Saves persist across browser sessions
+* Visitor Mode Support – Works without login
+* Complete Progress Tracking – HP, inventory, checkpoint, tutorial flags, and more are all saved
+* Correct Scene Restoration – Resumes at the saved checkpoint with the correct in-game state and title card
 
 ---
 
-## 🎮 How to Play
+## How to Play
 
 1. Open `index.html` in a modern web browser.
-2. Click **“Start”** to begin.
+2. Click "Start" to begin.
 3. Your progress will auto-save at checkpoints.
 4. Refresh the page – your save will auto-load automatically.
 
 ---
 
-## 💾 Save System
+## Save System
 
 ### Auto-Save
 
@@ -36,15 +36,15 @@ hoyofair_gamesave
 
 ### Save Data Includes
 
-* **Checkpoint** – Current scene and position
-* **Player Stats** – HP, max HP, attack, abilities
-* **Map Progress** – Unlocked areas, collected items, defeated enemies
-* **Inventory** – Items and cards collected
-* **Tutorial Flags** – Completed tutorials won’t replay
+* Checkpoint – Current scene and position
+* Player Stats – HP, max HP, attack, abilities
+* Map Progress – Unlocked areas, collected items, defeated enemies
+* Inventory – Items and cards collected
+* Tutorial Flags – Completed tutorials won't replay
 
 ### Manual Save Access
 
-Open the browser console (`F12`) and run:
+Open the browser console (F12) and run:
 
 ```javascript
 // View save data
@@ -56,7 +56,7 @@ localStorage.removeItem('hoyofair_gamesave');
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
 ### Modified Files
 
@@ -67,54 +67,48 @@ localStorage.removeItem('hoyofair_gamesave');
 
 The save system is built around four core patches:
 
-1. **Helper Functions** – `saveToLocalStorage()` and `loadFromLocalStorage()`
-2. **Auto-Save Trigger** – Automatically saves at checkpoints
-3. **Load Interceptor** – A `Se()` wrapper that loads saved data on game initialization
-4. **State Sync** – Updates global `ye.gameData` to restore HP and overall progress correctly
+1. Helper Functions – `saveToLocalStorage()` and `loadFromLocalStorage()`
+2. Auto-Save Trigger – Automatically saves at checkpoints
+3. Load Interceptor – A `Se()` wrapper that loads saved data on game initialization
+4. State Sync – Updates global `ye.gameData` to restore HP and overall progress correctly
 
 ---
 
-## 📝 Credits
+## Credits
 
-* **Original Game:** HoYoFair Team (Licialurie, Kuro Lee, To___e, and other creators)
-* **Localization:** Official HoYoFair event
-* **Save System:** Community modification
-
----
-
-## ⚠️ Disclaimer
-
-This is a **fan-made modification** for local offline play.
-All rights to the original game belong to **COGNOSPHERE / HoYoverse**.
+* Original Game: HoYoFair Team (Licialurie, Kuro Lee, To___e, and other creators)
+* Reverse Engineering & Save System Implementation: Assisted by Gemini 3 & Claude Sonnet 4.5 
 
 ---
 
-## 🐛 Troubleshooting
+## Disclaimer
+
+This is a fan-made modification for local offline play.
+All rights to the original game belong to the original creators.
+
+---
+
+## Troubleshooting
 
 ### Game Not Loading Save?
 
-* Clear browser cache (`Ctrl + Shift + Delete`).
-* Check the console (`F12`) for `[LocalSave]` messages.
+* Clear browser cache (Ctrl + Shift + Delete).
+* Check the console (F12) for `[LocalSave]` messages.
 * Verify that the save exists:
 
   ```javascript
   localStorage.getItem('hoyofair_gamesave');
   ```
 
-### Title Card Shows Wrong Scene?
-
-* This is a known **cosmetic issue**.
-* The game will still load the **correct scene** after you click **“Click to continue”**.
-
 ### Progress Not Saving?
 
 * Make sure you actually reach a checkpoint (the game will auto-save there).
 * Check that the browser allows `localStorage`.
-* Ensure you are **not** in private / incognito mode.
+* Ensure you are not in private / incognito mode.
 
 ---
 
-## 📦 File Structure
+## File Structure
 
 ```
 LightningSwordsman_Local/
@@ -134,7 +128,7 @@ LightningSwordsman_Local/
 
 ---
 
-## 🚀 Building
+## Building
 
 No build step required – everything runs directly in the browser.
 
@@ -149,7 +143,6 @@ No build step required – everything runs directly in the browser.
 
 ---
 
-## 📜 License
+## License
 
-Please refer to the original game’s terms of service on the
-Genshin Impact official site.
+Please refer to the original game's terms of service.
