@@ -25,8 +25,20 @@
     <!-- CRITICAL: Load Vue BEFORE any game scripts -->
     <script src="./libs/vue.runtime.min.js" crossorigin></script>
 
-    <!-- CSS PATCH: FORCE MENU VISIBILITY -->
+    <!-- FONT PRELOADS - Load before anything else -->
+    <link rel="preload" href="assets/fonts/font-en.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- CSS PATCH: FORCE MENU VISIBILITY + LOCAL FONTS -->
     <style>
+        /* Define the font locally BEFORE the game tries to load it from CDN */
+        @font-face {
+            font-family: 'meHywhFont';
+            src: url('assets/fonts/font-en.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         .lang-item {
             display: flex !important;
             visibility: visible !important;
@@ -52,6 +64,33 @@
                 Object.defineProperty(navigator, 'languages', { value: ['en-US', 'en'], configurable: true });
             } catch (e) { }
 
+            // --- 1.5. CSS RULE INTERCEPTOR - Catch dynamic @font-face injections ---
+            const fontUrlReplacer = (cssText) => {
+                // Replace mihoyo CDN font URLs with local paths
+                return cssText
+                    .replace(/https:\/\/act-webstatic\.mihoyo\.com\/font_generate\/[^"')]+\/([^"')]+\.(woff2?))/gi, 'assets/fonts/$1')
+                    .replace(/https:\/\/fastcdn\.hoyoverse\.com\/[^"')]+\/([^"')]+\.(woff2?))/gi, 'assets/fonts/$1');
+            };
+
+            // Intercept CSSStyleSheet.insertRule
+            const originalInsertRule = CSSStyleSheet.prototype.insertRule;
+            CSSStyleSheet.prototype.insertRule = function (rule, index) {
+                if (rule.includes('font-face') && (rule.includes('mihoyo.com') || rule.includes('hoyoverse.com'))) {
+                    rule = fontUrlReplacer(rule);
+                    console.log('[PATCH] Intercepted @font-face rule, redirecting to local');
+                }
+                return originalInsertRule.call(this, rule, index);
+            };
+
+            // Also intercept appendChild for style elements
+            const originalAppendChild = Node.prototype.appendChild;
+            Node.prototype.appendChild = function (node) {
+                if (node.tagName === 'STYLE' && node.textContent) {
+                    node.textContent = fontUrlReplacer(node.textContent);
+                }
+                return originalAppendChild.call(this, node);
+            };
+
             // --- 2. ERROR HANDLER ---
             window.onerror = function (msg, url, line, col, error) {
                 if (msg && (msg.includes('ResizeObserver') || msg.includes('AudioContext'))) return false;
@@ -67,36 +106,36 @@
             function resolveLocalPath(url) {
                 if (typeof url !== 'string') return null;
                 // Strip CSS url() wrapper
-                const cssUrlMatch = url.match(/url\(['"]?(.*?)['"]?\)/);
+                const cssUrlMatch = url.match(/url\(['\"]?(.*?)['\"]?\)/);
                 if (cssUrlMatch) url = cssUrlMatch[1];
 
                 let cleanPath = url.split('?')[0];
                 try { cleanPath = decodeURIComponent(cleanPath); } catch (e) { }
                 let filename = cleanPath.split('/').pop();
 
-                // A. FORCE ENGLISH CONFIGS
-                // If the game asks for zh-cn.json, GIVE IT en-us.json
-                if (filename.includes('zh-cn.json')) {
-                    const enFile = filename.replace('zh-cn', 'en-us');
-                    // console.log(`[PATCH] Swapping Config: ${filename} -> ${enFile}`);
-                    return enFile;
-                }
-                // If the game asks for zh-cn fonts, give en-us fonts
-                if (filename.includes('zh-cn') && filename.includes('.woff')) {
-                    return filename.replace('zh-cn', 'en-us');
-                }
-
-                // B. STANDARD ASSETS
+                // A. STANDARD ASSETS
                 if (cleanPath.match(/\.(png|jpg|jpeg|webp|gif|svg)$/i)) return 'images/' + filename;
                 if (cleanPath.match(/\.(mp3|wav|ogg|mp4|webm|ts)$/i)) return 'medias/' + filename;
 
-                // C. ROOT CONFIGS
-                if (cleanPath.match(/\.(json|woff|woff2)$/i)) {
-                    if (filename.includes('fontConfig') ||
-                        filename.includes('en-us') ||
-                        filename.match(/^m\d+.*\.json$/)) {
-                        return filename;
+                // B. FONTS - redirect to assets/fonts/ with clean names
+                if (cleanPath.match(/\.(woff2?|ttf|otf)$/i) || filename.includes('fontConfig')) {
+                    // Map old obfuscated font names to new clean names
+                    if (filename.includes('fontConfig')) return 'assets/fonts/fontConfig.json';
+                    if (filename.includes('en-us') || filename.includes('en_us')) return 'assets/fonts/font-en.woff2';
+                    if (filename.includes('zh-cn') || filename.includes('zh_cn')) return 'assets/fonts/font-en.woff2';
+                    // Fallback .woff to .woff2
+                    if (filename.endsWith('.woff') && !filename.endsWith('.woff2')) {
+                        filename = filename + '2';
                     }
+                    return 'assets/fonts/' + filename;
+                }
+
+                // C. LANGUAGE CONFIGS - redirect to assets/lang/ with clean names
+                if (cleanPath.match(/\.json$/i) && (filename.includes('en-us') || filename.includes('zh-cn') || filename.match(/^m\d+.*\.json$/))) {
+                    // Map old obfuscated lang names to new clean names
+                    if (filename.includes('zh-cn')) return 'assets/lang/lang-en.json';
+                    if (filename.includes('en-us')) return 'assets/lang/lang-en.json';
+                    return 'assets/lang/lang-en.json';
                 }
                 return null;
             }
@@ -249,11 +288,24 @@
                     }
                     if (m.addedNodes) {
                         m.addedNodes.forEach((node) => {
-                            if (node.tagName === 'STYLE' && node.innerHTML.includes('act-webstatic.mihoyo.com')) {
-                                node.innerHTML = node.innerHTML.replace(/https:\/\/act-webstatic\.mihoyo\.com\/font_generate\//g, '');
+                            if (node.tagName === 'STYLE') {
+                                // Redirect mihoyo font URLs to local assets/fonts/
+                                if (node.innerHTML.includes('act-webstatic.mihoyo.com/font_generate')) {
+                                    node.innerHTML = node.innerHTML.replace(
+                                        /https:\/\/act-webstatic\.mihoyo\.com\/font_generate\/[^"')]+\/([^"')]+\.(woff2?))/gi,
+                                        'assets/fonts/$1'
+                                    );
+                                }
+                                // Redirect fastcdn font URLs to local assets/fonts/
+                                if (node.innerHTML.includes('fastcdn.hoyoverse.com')) {
+                                    node.innerHTML = node.innerHTML.replace(
+                                        /https:\/\/fastcdn\.hoyoverse\.com\/[^"')]+\/([^"')]+\.(woff2?))/gi,
+                                        'assets/fonts/$1'
+                                    );
+                                }
                             }
                             if (node.tagName === 'LINK' && node.href && node.href.includes('act-webstatic.mihoyo.com')) {
-                                node.href = node.href.split('/').pop();
+                                node.href = 'assets/fonts/' + node.href.split('/').pop();
                             }
                         });
                     }
@@ -268,12 +320,12 @@
 
     <!-- App Scripts -->
     <script src="./libs/sentry-vue.tracing.es5.min.js"></script>
-    <script defer="defer" src="assets/js/vendors_c305f15d74fe43b9e2ba.js"></script>
-    <script defer="defer" src="assets/js/styles_546cd7b2a89c34836c8f.js"></script>
-    <script defer="defer" src="assets/js/index_99c2384191bb2cc9078c.js"></script>
+    <script defer="defer" src="assets/js/vendors.js"></script>
+    <script defer="defer" src="assets/js/styles.js"></script>
+    <script defer="defer" src="assets/js/game.js"></script>
 
     <!-- Stylesheets -->
-    <link href="assets/css/styles_7a0c341105bf886443fc.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
 </head>
 
 <body>
