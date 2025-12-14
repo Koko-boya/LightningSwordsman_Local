@@ -68,7 +68,7 @@ localStorage.removeItem('hoyofair_gamesave');
 ### Modified Files
 
 * `index.html` – Mock plugins added for offline operation
-* `assets/js/index_99c2384191bb2cc9078c.js` – Save system implementation
+* `assets/js/game.js` – Game logic + save system implementation
 
 ### Implementation Overview
 
@@ -125,18 +125,19 @@ All rights to the original game belong to the original creators.
 
 ```
 LightningSwordsman_Local/
-├── index.html                              # Main entry point
+├── index.html                # Main entry point
 ├── assets/
 │   ├── js/
-│   │   ├── index_99c2384191bb2cc9078c.js   # Game logic + save system
-│   │   ├── vendors_c305f15d74fe43b9e2ba.js # Dependencies
-│   │   └── styles_546cd7b2a89c34836c8f.js  # UI-related scripts
+│   │   ├── game.js           # Game logic + save system
+│   │   ├── vendors.js        # Dependencies
+│   │   └── styles.js         # UI-related scripts
 │   ├── css/
-│   │   └── styles_7a0c341105bf886443fc.css # Stylesheets
-│   └── ...
-├── images/                                 # Image assets
-├── medias/                                 # Audio / video assets
-└── libs/                                   # Libraries
+│   │   └── styles.css        # Stylesheets
+│   ├── fonts/                # Font files
+│   └── lang/                 # Language files
+├── images/                   # Image assets
+├── medias/                   # Audio / video assets
+└── libs/                     # Libraries (Vue, Sentry)
 ```
 
 ---
